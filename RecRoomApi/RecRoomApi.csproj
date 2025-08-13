@@ -1,0 +1,42 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <IncludeSymbolsInSingleFile>true</IncludeSymbolsInSingleFile>
+    <PublishAot>true</PublishAot>
+    <StripSymbols>true</StripSymbols>
+    <LangVersion>13</LangVersion>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <BuildingInsidePublish Condition="'$(DotNetPublish)' == 'true'">true</BuildingInsidePublish>
+  </PropertyGroup>
+
+  <Target Name="CustomBuild" BeforeTargets="Build" Condition="'$(BuildingInsidePublish)' != 'true'">
+    <Exec Command="dotnet publish -r win-x64 -c $(Configuration) -p:DotNetPublish=true" />
+  </Target>
+
+  <Target Name="CopyPublishedDll" AfterTargets="Publish">
+    <PropertyGroup>
+      <ParentDir>$([System.IO.Directory]::GetParent('$(MSBuildProjectDirectory)').FullName)</ParentDir>
+    </PropertyGroup>
+    <ItemGroup>
+      <PublishedDll Include="$(PublishDir)$(AssemblyName).dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(PublishedDll)" DestinationFolder="$(ParentDir)\Win64\" />
+  </Target>
+
+  <ItemGroup>
+    <PackageReference Include="Iced" Version="1.21.0" />
+  </ItemGroup>
+
+
+</Project>
