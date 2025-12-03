@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Iced.Intel;
 
 namespace RecRoomApi;
@@ -12,23 +13,57 @@ public static class PatternFinder
 	{
 		var hits = new List<Hit>();
 
-		// different handling for il2cpp_init because of the annoying memory jump at the start
 		// hopefully wont need to uncomment this
 		var firstLea = ins.First(i => i.Mnemonic == Mnemonic.Lea).MemoryDisplacement32;
-		var il2cppInit = ins.SkipWhile(i => i.Mnemonic != Mnemonic.Call).Skip(1).First(i => i.Mnemonic == Mnemonic.Mov).MemoryDisplacement32;
+		var il2cppInit = ins
+			.SkipWhile(i => i.Mnemonic != Mnemonic.Call)
+			.Skip(1)
+			.First(i => i.Mnemonic == Mnemonic.Mov)
+			.MemoryDisplacement32;
 		hits.Add(new Hit(firstLea, il2cppInit));
 
-		for (int i = 0; i + 4 < ins.Count; i++)
+		// Main pattern scan
+		for (int i = 0; i < ins.Count; i++)
 		{
-			if (!IsMovRcxFromMem(ins[i], out var movRcxAddr)) continue;
-			if (!IsLeaRdxFromMem(ins[i + 1], out var leaRdxAddr)) continue;
+			ulong leaRdxAddr;
 
-			int k = i + 2;
-			if (IsOptionalBetweenLeaAndCall(ins[k])) k++;
-			if (k + 1 >= ins.Count) continue;
+			// Two supported entry patterns:
+			// 1) lea rdx, [...]
+			// 2) mov rcx, [...] ; lea rdx, [...]
+			int k; // index of candidate instruction after LEA
 
-			if (!IsCall(ins[k], out var callTarget)) continue;
-			if (!IsMovStoreFromRax(ins[k + 1], out var movStoreAddr)) continue;
+			if (IsLeaRdxFromMem(ins[i], out leaRdxAddr))
+			{
+				// Pattern: lea rdx, [...]
+				k = i + 1;
+			}
+			else if (i + 1 < ins.Count &&
+					 IsMovRcxFromMem(ins[i], out _) &&
+					 IsLeaRdxFromMem(ins[i + 1], out leaRdxAddr))
+			{
+				// Pattern: mov rcx, [...] ; lea rdx, [...]
+				k = i + 2;
+			}
+			else
+			{
+				continue;
+			}
+
+			if (k >= ins.Count)
+				continue;
+
+			// Optional instruction(s) between LEA and CALL
+			if (IsOptionalBetweenLeaAndCall(ins[k]))
+				k++;
+
+			if (k + 1 >= ins.Count)
+				continue;
+
+			if (!IsCall(ins[k], out var _))
+				continue;
+
+			if (!IsMovStoreFromRax(ins[k + 1], out var movStoreAddr))
+				continue;
 
 			hits.Add(new Hit(leaRdxAddr, movStoreAddr));
 		}
