@@ -18,7 +18,7 @@ public class MainApp
 	public static IntPtr UnityPlayerHandle = IntPtr.Zero;
 	public static byte[] moduleBytes = [];
 	public static byte[] UnityPlayerBytes = [];
-	public static readonly string Pattern = "48 83 EC ?? 33 D2 E8 ?? ?? ?? ?? 48 89 05";
+	public static readonly string Pattern = "48 83 EC ?? E8 ?? ?? ?? ?? 48 89 05";
 	public static ulong BaseAddress = 0x0;
 	public static List<PEHeader.SectionTable> sectionTables = new List<PEHeader.SectionTable>();
 
