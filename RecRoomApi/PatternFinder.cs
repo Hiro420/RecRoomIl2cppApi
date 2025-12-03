@@ -14,13 +14,13 @@ public static class PatternFinder
 		var hits = new List<Hit>();
 
 		// hopefully wont need to uncomment this
-		var firstLea = ins.First(i => i.Mnemonic == Mnemonic.Lea).MemoryDisplacement32;
-		var il2cppInit = ins
-			.SkipWhile(i => i.Mnemonic != Mnemonic.Call)
-			.Skip(1)
-			.First(i => i.Mnemonic == Mnemonic.Mov)
-			.MemoryDisplacement32;
-		hits.Add(new Hit(firstLea, il2cppInit));
+		//var firstLea = ins.First(i => i.Mnemonic == Mnemonic.Lea).MemoryDisplacement32;
+		//var il2cppInit = ins
+		//	.SkipWhile(i => i.Mnemonic != Mnemonic.Call)
+		//	.Skip(1)
+		//	.First(i => i.Mnemonic == Mnemonic.Mov)
+		//	.MemoryDisplacement32;
+		//hits.Add(new Hit(firstLea, il2cppInit));
 
 		// Main pattern scan
 		for (int i = 0; i < ins.Count; i++)
